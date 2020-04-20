@@ -1,0 +1,13 @@
+
+{
+  "@class" : "org.apereo.cas.services.RegexRegisteredService",
+  "serviceId" : "^https://alfresco-triall.dev.sphereon.com/*",
+  "name" : "Alfresco",
+    "id" : 1002,
+  "accessStrategy" : {
+    "@class" : "org.apereo.cas.services.DefaultRegisteredServiceAccessStrategy",
+    "enabled" : true,
+    "ssoEnabled" : true
+  }
+}
+
