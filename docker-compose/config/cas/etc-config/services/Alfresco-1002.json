@@ -1,7 +1,7 @@
 
 {
   "@class" : "org.apereo.cas.services.RegexRegisteredService",
-  "serviceId" : "^https://alfresco-triall.dev.sphereon.com/*",
+  "serviceId" : "^(https|http)://.*",
   "name" : "Alfresco",
     "id" : 1002,
   "accessStrategy" : {

@@ -11,5 +11,4 @@ sphereon:
 
 tomcat:
   protocol:
-    ajp: true
-
+    ajp: false

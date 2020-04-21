@@ -9,266 +9,233 @@
 version: "2"
 
 services:
-    traefik:
-        # The official v2 Traefik docker image
-        image: traefik:v2.2
-        command: [
-            "--api.insecure=true",
-            "--providers.docker",
-            "--providers.docker.exposedbydefault=false",
-            "--entrypoints.websecure.address=:443",
-            "--certificatesresolvers.myresolver.acme.tlschallenge=true",
-            "--certificatesresolvers.myresolver.acme.email=dev@sphereon.com",
-            "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json",
-            "--log.filePath=/logs/traefik.log",
-            "--log.level=DEBUG",
-        ]
-        ports:
-            # The HTTP/HTTPS ports
-            - "80:80"
-            - "443:443"
-            # The Web UI (enabled by --api.insecure=true)
-            - "8180:8080"
-        volumes:
-            - "./letsencrypt:/letsencrypt"
-            - "./logs:/logs"
-            # So that Traefik can listen to the Docker events
-            - /var/run/docker.sock:/var/run/docker.sock
+  traefik:
+    # The official v2 Traefik docker image
+    image: traefik:v2.2
+    command: [
+      "--api.insecure=true",
+      "--providers.docker",
+      "--providers.docker.exposedbydefault=false",
+      "--entrypoints.websecure.address=:443",
+      "--certificatesresolvers.myresolver.acme.tlschallenge=true",
+      "--certificatesresolvers.myresolver.acme.email=dev@sphereon.com",
+      "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json",
+      "--log.filePath=/logs/traefik.log",
+      "--log.level=DEBUG",
+    ]
+    ports:
+      # The HTTP/HTTPS ports
+      - "80:80"
+      - "443:443"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      - "./letsencrypt:/letsencrypt"
+      - "./logs:/logs"
+      # So that Traefik can listen to the Docker events
+      - /var/run/docker.sock:/var/run/docker.sock
 
-    traefik-cas:
-        image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/traefik-cas
-        environment:
-            - CAS_BASE_URL=https://alfresco-triall.dev.sphereon.com/cas
-#        networks:
-#            - traefik
+  traefik-cas:
+    image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/traefik-cas
+    environment:
+      - CAS_BASE_URL=https://alfresco-triall.dev.sphereon.com/cas
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.traefik-cas.loadbalancer.server.port=4188"
 
-    alfresco:
-        image: alfresco/alfresco-content-repository-community:6.2.0-ga
-        mem_limit: 1500m
-        environment:
-            JAVA_OPTS: "
-                -Ddb.driver=org.postgresql.Driver
-                -Ddb.username=alfresco
-                -Ddb.password=alfresco
-                -Ddb.url=jdbc:postgresql://postgres:5432/alfresco
-                -Dsolr.host=solr6
-                -Dsolr.port=8983
-                -Dsolr.secureComms=none
-                -Dsolr.base.url=/solr
-                -Dindex.subsystem.name=solr6
-                -Dshare.protocol=https
-                -Dshare.host=alfresco-triall.dev.sphereon.com
-                -Dshare.port=443
-                -Dalfresco.protocol=https
-                -Dalfresco.host=alfresco-triall.dev.sphereon.com
-                -Dalfresco.port=443
-                -Daos.baseUrlOverwrite=http://localhost:8080/alfresco/aos
-                -Dmessaging.broker.url=\"failover:(nio://activemq:61616)?timeout=3000&jms.useCompression=true\"
+  alfresco:
+    image: alfresco/alfresco-content-repository-community:6.2.0-ga
+    mem_limit: 1500m
+    environment:
+      JAVA_OPTS: "
                 -Ddeployment.method=DOCKER_COMPOSE
-
-                -Dauthentication.chain=external1:external
-                -Dexternal.authentication.proxyUserName=
-                -Dexternal.authentication.enabled=true
-                -Dexternal.authentication.defaultAdministratorUserNames=admin,Sander,ChristopheVico
-                -Dexternal.authentication.proxyHeader=X-Alfresco-Remote-User
-                -Dexternal.authentication.mapUnknownUserToGuest=false
-                -Dexternal.create.missing.people=true
-                -Dexternal.synchronization.syncWhenMissingPeopleLogIn=true
-                -Dexternal.synchronization.syncOnStartup=true
-                -Dexternal.synchronization.autoCreatePeopleOnLogin=true
-                -Dcreate.missing.people=true
-                -Dsynchronization.syncWhenMissingPeopleLogIn=true
-                -Dsynchronization.syncOnStartup=true
-                -Dsynchronization.autoCreatePeopleOnLogin=true
-
-                -Dcsrf.filter.enabled=false
-
-                -Dlocal.transform.service.enabled=true
-                -DlocalTransform.pdfrenderer.url=http://alfresco-pdf-renderer:8090/
-                -DlocalTransform.imagemagick.url=http://imagemagick:8090/
-                -DlocalTransform.libreoffice.url=http://libreoffice:8090/
-                -DlocalTransform.tika.url=http://tika:8090/
-                -DlocalTransform.misc.url=http://transform-misc:8090/
-
-                -Dlegacy.transform.service.enabled=true
-                -Dalfresco-pdf-renderer.url=http://alfresco-pdf-renderer:8090/
-                -Djodconverter.url=http://libreoffice:8090/
-                -Dimg.url=http://imagemagick:8090/
-                -Dtika.url=http://tika:8090/
-                -Dtransform.misc.url=http://transform-misc:8090/
                 -Xms1500m -Xmx1500m
                 "
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.alfresco.rule=Host(`alfresco-triall.dev.sphereon.com`) && PathPrefix(`/alfresco`)"
-            - "traefik.http.routers.alfresco.entrypoints=websecure"
-            - "traefik.http.routers.alfresco.tls.certresolver=myresolver"
-            - "traefik.http.middlewares.alfresco.redirectscheme.scheme=https"
-            - "traefik.http.middlewares.alfresco.redirectscheme.permanent=true"
-            - "traefik.http.middlewares.alfresco.forwardauth.address=http://traefik-cas:4189"
-            - "traefik.http.middlewares.alfresco.forwardauth.authResponseHeaders=X-Forwarded-User"
+    ports:
+      - 8080
+    volumes:
+      - ./config/alfresco/alfresco-global.properties:/usr/local/tomcat/shared/classes/alfresco-global.properties
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.alfresco.loadbalancer.server.port=8080"
+      - "traefik.http.routers.alfresco.rule=Host(`alfresco-triall.dev.sphereon.com`) && PathPrefix(`/alfresco`)"
+      - "traefik.http.routers.alfresco.entrypoints=websecure"
+      - "traefik.http.routers.alfresco.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.cas-auth.forwardauth.Address=http://traefik-cas:4188"
+      - "traefik.http.middlewares.cas-auth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.alfresco.middlewares=cas-auth,redirect-https"
+  # TODO Add RegEx to filter SOLR API's
+  alfresco-pdf-renderer:
+    image: alfresco/alfresco-pdf-renderer:2.1.1
+    mem_limit: 1g
+    environment:
+      JAVA_OPTS: " -Xms256m -Xmx512m"
+    ports:
+      - 8090
 
-    # TODO Add RegEx to filter SOLR API's
-    alfresco-pdf-renderer:
-        image: alfresco/alfresco-pdf-renderer:2.1.1
-        mem_limit: 1g
-        environment:
-            JAVA_OPTS: " -Xms256m -Xmx512m"
-        ports:
-            - 8090:8090
+  imagemagick:
+    image: alfresco/alfresco-imagemagick:2.1.1
+    mem_limit: 1g
+    environment:
+      JAVA_OPTS: " -Xms256m -Xmx512m"
+    ports:
+      - 8090
 
-    imagemagick:
-        image: alfresco/alfresco-imagemagick:2.1.1
-        mem_limit: 1g
-        environment:
-            JAVA_OPTS: " -Xms256m -Xmx512m"
-        ports:
-            - 8091:8090
+  libreoffice:
+    image: alfresco/alfresco-libreoffice:2.1.1
+    mem_limit: 1g
+    environment:
+      JAVA_OPTS: " -Xms256m -Xmx512m"
+    ports:
+      - 8090
 
-    libreoffice:
-        image: alfresco/alfresco-libreoffice:2.1.1
-        mem_limit: 1g
-        environment:
-            JAVA_OPTS: " -Xms256m -Xmx512m"
-        ports:
-            - 8092:8090
+  tika:
+    image: alfresco/alfresco-tika:2.1.1
+    mem_limit: 1g
+    environment:
+      JAVA_OPTS: " -Xms256m -Xmx512m"
+    ports:
+      - 8090
 
-    tika:
-        image: alfresco/alfresco-tika:2.1.1
-        mem_limit: 1g
-        environment:
-            JAVA_OPTS: " -Xms256m -Xmx512m"
-        ports:
-            - 8093:8090
+  transform-misc:
+    image: alfresco/alfresco-transform-misc:2.1.1
+    mem_limit: 1g
+    environment:
+      JAVA_OPTS: " -Xms256m -Xmx512m"
+    ports:
+      - 8090
 
-    transform-misc:
-        image: alfresco/alfresco-transform-misc:2.1.1
-        mem_limit: 1g
-        environment:
-            JAVA_OPTS: " -Xms256m -Xmx512m"
-        ports:
-            - 8094:8090
-
-    share:
-        image: alfresco/alfresco-share:6.2.0
-        mem_limit: 1g
-        environment:
-            REPO_HOST: "alfresco"
-            REPO_PORT: "8080"
-            JAVA_OPTS: "
+  share:
+    image: alfresco/alfresco-share:6.2.0
+    mem_limit: 1g
+    environment:
+      #            REPO_HOST: "alfresco"
+      #            REPO_PORT: "8080"
+      JAVA_OPTS: "
                 -Xms500m
                 -Xmx500m
                 -Dalfresco.host=alfresco-triall.dev.sphereon.com
                 -Dalfresco.context=alfresco
                 -Dalfresco.protocol=https
                 "
-        volumes:
-            - ./config/alfresco/share-config-custom.xml:/usr/local/tomcat/shared/classes/alfresco/web-extension/share-config-custom.xml
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.services.share.loadbalancer.server.port=8080"
-            - "traefik.http.routers.share.rule=Host(`alfresco-triall.dev.sphereon.com`) && PathPrefix(`/share`)"
-            - "traefik.http.routers.share.entrypoints=websecure"
-            - "traefik.http.routers.share.tls.certresolver=myresolver"
-            - "traefik.http.middlewares.share.redirectscheme.scheme=https"
-            - "traefik.http.middlewares.share.redirectscheme.permanent=true"
-            - "traefik.http.middlewares.share.headers.customrequestheaders.Origin="
-            - "traefik.http.middlewares.share.forwardauth.address=http://traefik-cas:4189"
-            - "traefik.http.middlewares.share.forwardauth.authResponseHeaders=X-Forwarded-User"
-    postgres:
-        image: postgres:11.4
-        mem_limit: 512m
-        environment:
-            - POSTGRES_PASSWORD=alfresco
-            - POSTGRES_USER=alfresco
-            - POSTGRES_DB=alfresco
-        command: postgres -c max_connections=300 -c log_min_messages=LOG
-        ports:
-            - 5432:5432
+    ports:
+      - 8080
+    volumes:
+      - ./config/alfresco/substituter.sh:/usr/local/tomcat/shared/classes/alfresco/substituter.sh
+      - ./config/alfresco/share-config-custom.xml:/usr/local/tomcat/shared/classes/alfresco/web-extension/share-config-custom.xml
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.share.loadbalancer.server.port=8080"
+      - "traefik.http.routers.share.rule=Host(`alfresco-triall.dev.sphereon.com`) && PathPrefix(`/share`)"
+      - "traefik.http.routers.share.entrypoints=websecure"
+      - "traefik.http.routers.share.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.cas-auth.forwardauth.Address=http://traefik-cas:4188"
+      - "traefik.http.middlewares.cas-auth.forwardauth.authResponseHeaders=X-Forwarded-User"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
+      - "traefik.http.routers.share.middlewares=cas-auth,redirect-https"
+  postgres:
+    image: postgres:11.4
+    mem_limit: 512m
+    environment:
+      - POSTGRES_PASSWORD=alfresco
+      - POSTGRES_USER=alfresco
+      - POSTGRES_DB=alfresco
+    command: postgres -c max_connections=300 -c log_min_messages=LOG
+    ports:
+      - 5432
 
-    solr6:
-        image: alfresco/alfresco-search-services:1.4.0
-        mem_limit: 2g
-        environment:
-            #Solr needs to know how to register itself with Alfresco
-            - SOLR_ALFRESCO_HOST=alfresco
-            - SOLR_ALFRESCO_PORT=8080
-            #Alfresco needs to know how to call solr
-            - SOLR_SOLR_HOST=solr6
-            - SOLR_SOLR_PORT=8983
-            #Create the default alfresco and archive cores
-            - SOLR_CREATE_ALFRESCO_DEFAULTS=alfresco,archive
-            #HTTP by default
-            - ALFRESCO_SECURE_COMMS=none
-            - "SOLR_JAVA_MEM=-Xms2g -Xmx2g"
-        ports:
-            - 8083:8983 #Browser port
+  solr6:
+    image: alfresco/alfresco-search-services:1.4.0
+    mem_limit: 2g
+    environment:
+      #Solr needs to know how to register itself with Alfresco
+      - SOLR_ALFRESCO_HOST=alfresco
+      - SOLR_ALFRESCO_PORT=8080
+      #Alfresco needs to know how to call solr
+      - SOLR_SOLR_HOST=solr6
+      - SOLR_SOLR_PORT=8983
+      #Create the default alfresco and archive cores
+      - SOLR_CREATE_ALFRESCO_DEFAULTS=alfresco,archive
+      #HTTP by default
+      - ALFRESCO_SECURE_COMMS=none
+      - "SOLR_JAVA_MEM=-Xms2g -Xmx2g"
+    ports:
+      - 8983 #Browser port
 
-    activemq:
-        image: alfresco/alfresco-activemq:5.15.8
-        mem_limit: 1g
-        ports:
-            - 8161:8161 # Web Console
-            - 5672:5672 # AMQP
-            - 61616:61616 # OpenWire
-            - 61613:61613 # STOMP
+  activemq:
+    image: alfresco/alfresco-activemq:5.15.8
+    mem_limit: 1g
+    ports:
+      - 8161 # Web Console
+      - 5672 # AMQP
+      - 61616 # OpenWire
+      - 61613 # STOMP
 
-    mongodb:
-        image: mongo:latest
-        mem_limit: 1g
-#        environment:
-#            MONGO_INITDB_ROOT_USERNAME: root
-#            MONGO_INITDB_ROOT_PASSWORD: changeit
-        ports:
-            - 27017:27017
-        volumes:
-            - mongodb_data_container:/data/db
+  mongodb:
+    image: mongo:latest
+    mem_limit: 1g
+    #        environment:
+    #            MONGO_INITDB_ROOT_USERNAME: root
+    #            MONGO_INITDB_ROOT_PASSWORD: changeit
+    ports:
+      - 27017
+    volumes:
+      - mongodb_data_container:/data/db
 
-    apereo-cas:
-        image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/apereo-cas
-        mem_limit: 1g
-        ports:
-            - 8190:8090
-        volumes:
-            - "./config/cas/etc-config:/etc/cas"
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.alfresco.rule=Host(`alfresco-triall.dev.sphereon.com`) && PathPrefix(`/cas`)"
-            - "traefik.http.routers.alfresco.entrypoints=websecure"
-            - "traefik.http.routers.alfresco.tls.certresolver=myresolver"
-            - "traefik.http.middlewares.alfresco.redirectscheme.scheme=https"
-            - "traefik.http.middlewares.alfresco.redirectscheme.permanent=true"
+  apereo-cas:
+    image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/apereo-cas
+    mem_limit: 1g
+    ports:
+      - 8090
+      - 8443:8443
+    volumes:
+      - "./config/cas/entrypoint.sh:/docker/entrypoint.sh"
+      - "./config/cas/etc-config:/etc/cas"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.apereo-cas.loadbalancer.server.port=8090"
+      - "traefik.http.routers.apereo-cas.rule=Host(`alfresco-triall.dev.sphereon.com`) && PathPrefix(`/cas`)"
+      - "traefik.http.routers.apereo-cas.entrypoints=websecure"
+      - "traefik.http.routers.apereo-cas.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.apereo-cas.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.apereo-cas.redirectscheme.permanent=true"
 
-    did-mapping-ms:
-        image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/did-mapping-ms
-        mem_limit: 512m
-        ports:
-            - 8191:8080
-        environment:
-            JAVA_OPTIONS: "
+  did-mapping-ms:
+    image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/did-mapping-ms
+    mem_limit: 512m
+    ports:
+      - 8080
+    environment:
+      JAVA_OPTIONS: "
             -Dspring.data.mongodb.host=mongodb
             -Dspring.data.mongodb.port=27017
             "
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.alfresco.rule=Host(`mapping.did.alfresco.dev.sphereon.com`)"
-            - "traefik.http.routers.alfresco.entrypoints=websecure"
-            - "traefik.http.routers.alfresco.tls.certresolver=myresolver"
-            - "traefik.http.middlewares.alfresco.redirectscheme.scheme=https"
-            - "traefik.http.middlewares.alfresco.redirectscheme.permanent=true"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.did-mapping-ms.loadbalancer.server.port=8080"
+      - "traefik.http.routers.did-mapping-ms.rule=Host(`mapping.did.alfresco.dev.sphereon.com`)"
+      - "traefik.http.routers.did-mapping-ms.entrypoints=websecure"
+      - "traefik.http.routers.did-mapping-ms.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.did-mapping-ms.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.did-mapping-msz.redirectscheme.permanent=true"
 
-    did-transports-ms:
-        image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/did-transports-ms
-        mem_limit: 512m
-        ports:
-            - 8192:3000
-        labels:
-            - "traefik.enable=true"
-            - "traefik.http.routers.alfresco.rule=Host(`transports.did.alfresco.dev.sphereon.com`)"
-            - "traefik.http.routers.alfresco.entrypoints=websecure"
-            - "traefik.http.routers.alfresco.tls.certresolver=myresolver"
-            - "traefik.http.middlewares.alfresco.redirectscheme.scheme=https"
-            - "traefik.http.middlewares.alfresco.redirectscheme.permanent=true"
+  did-transports-ms:
+    image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/did-transports-ms
+    mem_limit: 512m
+    ports:
+      - 3000
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.services.did-transports-ms.loadbalancer.server.port=3000"
+      - "traefik.http.routers.did-transports-ms.rule=Host(`transports.did.alfresco.dev.sphereon.com`)"
+      - "traefik.http.routers.did-transports-ms.entrypoints=websecure"
+      - "traefik.http.routers.did-transports-ms.tls.certresolver=myresolver"
+      - "traefik.http.middlewares.did-transports-ms.redirectscheme.scheme=https"
+      - "traefik.http.middlewares.did-transports-ms.redirectscheme.permanent=true"
 
 volumes:
-    mongodb_data_container:
+  mongodb_data_container:
+  alf_data_container:

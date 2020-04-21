@@ -1,8 +1,8 @@
 
 {
   "@class" : "org.apereo.cas.services.RegexRegisteredService",
-  "serviceId" : "https://alfresco-triall.dev.sphereon.com/share/",
-  "name" : "Alfresco/share",
+  "serviceId" : "https://alfresco-triall.dev.sphereon.com/*",
+  "name" : "Alfresco",
     "id" : 1001,
   "accessStrategy" : {
     "@class" : "org.apereo.cas.services.DefaultRegisteredServiceAccessStrategy",
