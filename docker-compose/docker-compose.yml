@@ -40,7 +40,7 @@ services:
   traefik-cas:
     image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/traefik-cas
     environment:
-      - CAS_BASE_URL=https://alfresco-triall.dev.sphereon.com/cas
+      - CAS_BASE_URL=https://${PUBLIC_HOSTNAME}/cas
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.traefik-cas.loadbalancer.server.port=4188"
@@ -61,7 +61,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.alfresco.loadbalancer.server.port=8080"
-      - "traefik.http.routers.alfresco.rule=Host(`alfresco-triall.dev.sphereon.com`) && PathPrefix(`/alfresco`)"
+      - "traefik.http.routers.alfresco.rule=Host(`${PUBLIC_HOSTNAME}`) && PathPrefix(`/alfresco`)"
       - "traefik.http.routers.alfresco.entrypoints=websecure"
       - "traefik.http.routers.alfresco.tls.certresolver=myresolver"
       - "traefik.http.middlewares.cas-auth.forwardauth.Address=http://traefik-cas:4188"
@@ -120,7 +120,7 @@ services:
       JAVA_OPTS: "
                 -Xms500m
                 -Xmx500m
-                -Dalfresco.host=alfresco-triall.dev.sphereon.com
+                -Dalfresco.host=${PUBLIC_HOSTNAME}
                 -Dalfresco.context=alfresco
                 -Dalfresco.protocol=https
                 "
@@ -132,7 +132,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.share.loadbalancer.server.port=8080"
-      - "traefik.http.routers.share.rule=Host(`alfresco-triall.dev.sphereon.com`) && PathPrefix(`/share`)"
+      - "traefik.http.routers.share.rule=Host(`${PUBLIC_HOSTNAME}`) && PathPrefix(`/share`)"
       - "traefik.http.routers.share.entrypoints=websecure"
       - "traefik.http.routers.share.tls.certresolver=myresolver"
       - "traefik.http.middlewares.cas-auth.forwardauth.Address=http://traefik-cas:4188"
@@ -199,7 +199,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.apereo-cas.loadbalancer.server.port=8090"
-      - "traefik.http.routers.apereo-cas.rule=Host(`alfresco-triall.dev.sphereon.com`) && PathPrefix(`/cas`)"
+      - "traefik.http.routers.apereo-cas.rule=Host(`${PUBLIC_HOSTNAME}`) && PathPrefix(`/cas`)"
       - "traefik.http.routers.apereo-cas.entrypoints=websecure"
       - "traefik.http.routers.apereo-cas.tls.certresolver=myresolver"
       - "traefik.http.middlewares.apereo-cas.redirectscheme.scheme=https"
@@ -219,7 +219,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.did-mapping-ms.loadbalancer.server.port=8080"
-      - "traefik.http.routers.did-mapping-ms.rule=Host(`mapping.did.alfresco.dev.sphereon.com`)"
+      - "traefik.http.routers.did-mapping-ms.rule=Host(`${${DID_TRANSPORTS_HOSTNAME}}`)"
       - "traefik.http.routers.did-mapping-ms.entrypoints=websecure"
       - "traefik.http.routers.did-mapping-ms.tls.certresolver=myresolver"
       - "traefik.http.middlewares.did-mapping-ms.redirectscheme.scheme=https"
@@ -234,7 +234,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.did-transports-ms.loadbalancer.server.port=3000"
-      - "traefik.http.routers.did-transports-ms.rule=Host(`transports.did.alfresco.dev.sphereon.com`)"
+      - "traefik.http.routers.did-transports-ms.rule=Host(`${DID_MAPPING_HOSTNAME}`)"
       - "traefik.http.routers.did-transports-ms.entrypoints=websecure"
       - "traefik.http.routers.did-transports-ms.tls.certresolver=myresolver"
       - "traefik.http.middlewares.did-transports-ms.redirectscheme.scheme=https"

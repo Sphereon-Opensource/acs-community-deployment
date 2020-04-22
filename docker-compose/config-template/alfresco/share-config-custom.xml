@@ -79,13 +79,13 @@
                Override and set this property with a regexp that if you have placed Share behind a proxy that
                does not rewrite the Referer header.
             -->
-            <referer>[http|https]://alfresco-triall.dev.sphereon.com/.*</referer>
+            <referer>[http|https]://${PUBLIC_HOSTNAME}/.*</referer>
 
             <!--
                Override and set this property with a regexp that if you have placed Share behind a proxy that
                does not rewrite the Origin header.
             -->
-            <origin>[http|https]://alfresco-triall.dev.sphereon.com</origin>
+            <origin>[http|https]://${PUBLIC_HOSTNAME}</origin>
         </properties>
 
         <!--

@@ -1,0 +1,14 @@
+sphereon:
+  cas:
+    did:
+      auth:
+        appId: AlfrescoIntegration
+        appDid: ${DID_APP_ID}
+        didMapUrl: https://${DID_MAPPING_HOSTNAME}
+        didTransportsUrl: https://${DID_TRANSPORTS_HOSTNAME}
+        appSecret: ${DID_AUTH_SECRET}
+        baseCasUrl: https://${PUBLIC_HOSTNAME}/cas
+
+tomcat:
+  protocol:
+    ajp: false
