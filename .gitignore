@@ -37,3 +37,4 @@ helm/alfresco-content-services-community*.tgz
 /docker-compose/letsencrypt/acme.json
 /docker-compose/.env
 /docker-compose/config/
+/docker-compose/create-mapping-example.sh
