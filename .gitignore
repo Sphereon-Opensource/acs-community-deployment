@@ -36,3 +36,4 @@ helm/alfresco-content-services-community*.tgz
 /docker-compose/config/cas/etc-config/thekeystore
 /docker-compose/letsencrypt/acme.json
 /docker-compose/.env
+/docker-compose/config/

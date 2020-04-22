@@ -219,7 +219,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.did-mapping-ms.loadbalancer.server.port=8080"
-      - "traefik.http.routers.did-mapping-ms.rule=Host(`${${DID_TRANSPORTS_HOSTNAME}}`)"
+      - "traefik.http.routers.did-mapping-ms.rule=Host(`${DID_TRANSPORTS_HOSTNAME}`)"
       - "traefik.http.routers.did-mapping-ms.entrypoints=websecure"
       - "traefik.http.routers.did-mapping-ms.tls.certresolver=myresolver"
       - "traefik.http.middlewares.did-mapping-ms.redirectscheme.scheme=https"
