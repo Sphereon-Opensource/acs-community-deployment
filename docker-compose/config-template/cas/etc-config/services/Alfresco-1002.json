@@ -1,9 +1,9 @@
 
 {
   "@class" : "org.apereo.cas.services.RegexRegisteredService",
-  "serviceId" : "^(https|http)://${PUBLIC_HOSTNAME}/alfresco/*",
+  "serviceId" : "^(https|http)://${PUBLIC_HOSTNAME}/share/*",
   "name" : "Alfresco",
-    "id" : 1001,
+    "id" : 1002,
   "accessStrategy" : {
     "@class" : "org.apereo.cas.services.DefaultRegisteredServiceAccessStrategy",
     "enabled" : true,

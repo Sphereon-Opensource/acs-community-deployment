@@ -219,7 +219,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.did-mapping-ms.loadbalancer.server.port=8080"
-      - "traefik.http.routers.did-mapping-ms.rule=Host(`${DID_TRANSPORTS_HOSTNAME}`)"
+      - "traefik.http.routers.did-mapping-ms.rule=Host(`${DID_MAPPING_HOSTNAME}`)"
       - "traefik.http.routers.did-mapping-ms.entrypoints=websecure"
       - "traefik.http.routers.did-mapping-ms.tls.certresolver=myresolver"
       - "traefik.http.middlewares.did-mapping-ms.redirectscheme.scheme=https"
@@ -234,7 +234,7 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.services.did-transports-ms.loadbalancer.server.port=3000"
-      - "traefik.http.routers.did-transports-ms.rule=Host(`${DID_MAPPING_HOSTNAME}`)"
+      - "traefik.http.routers.did-transports-ms.rule=Host(`${DID_TRANSPORTS_HOSTNAME}`)"
       - "traefik.http.routers.did-transports-ms.entrypoints=websecure"
       - "traefik.http.routers.did-transports-ms.tls.certresolver=myresolver"
       - "traefik.http.middlewares.did-transports-ms.redirectscheme.scheme=https"
