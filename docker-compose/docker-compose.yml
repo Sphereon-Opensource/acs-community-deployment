@@ -9,8 +9,9 @@
 version: "2"
 
 services:
+  # traefik is used as front-end proxy because it will handle Letsencrypt certificates for the endpoints,
+  #   reducing complexity concerning self-signed certificates. On port 8080 it will show a nice web portal showing how everything is connected.
   traefik:
-    # The official v2 Traefik docker image
     image: traefik:v2.2
     command: [
       "--api.insecure=true",
@@ -35,6 +36,7 @@ services:
       # So that Traefik can listen to the Docker events
       - /var/run/docker.sock:/var/run/docker.sock
 
+  # traefik-cas is a helper module that implements the cas routing
   traefik-cas:
     image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/traefik-cas
     environment:
@@ -43,6 +45,7 @@ services:
       - "traefik.enable=true"
       - "traefik.http.services.traefik-cas.loadbalancer.server.port=4188"
 
+  # Compared to the original repo, most JAVA_OPTS entries have been moved to ./config/alfresco/alfresco-global.properties
   alfresco:
     image: alfresco/alfresco-content-repository-community:6.2.0-ga
     mem_limit: 1500m
@@ -67,6 +70,7 @@ services:
       - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
       - "traefik.http.routers.alfresco.middlewares=cas-auth,redirect-https"
   # TODO Add RegEx to filter SOLR API's
+
   alfresco-pdf-renderer:
     image: alfresco/alfresco-pdf-renderer:2.1.1
     mem_limit: 1g
@@ -111,8 +115,8 @@ services:
     image: alfresco/alfresco-share:6.2.0
     mem_limit: 1g
     environment:
-      #            REPO_HOST: "alfresco"
-      #            REPO_PORT: "8080"
+      REPO_HOST: "alfresco"
+      REPO_PORT: "8080"
       JAVA_OPTS: "
                 -Xms500m
                 -Xmx500m
@@ -136,6 +140,7 @@ services:
       - "traefik.http.middlewares.redirect-https.redirectscheme.scheme=https"
       - "traefik.http.middlewares.redirect-https.redirectscheme.permanent=true"
       - "traefik.http.routers.share.middlewares=cas-auth,redirect-https"
+
   postgres:
     image: postgres:11.4
     mem_limit: 512m
@@ -176,15 +181,13 @@ services:
 
   mongodb:
     image: mongo:latest
-    mem_limit: 1g
-    #        environment:
-    #            MONGO_INITDB_ROOT_USERNAME: root
-    #            MONGO_INITDB_ROOT_PASSWORD: changeit
+    mem_limit: 512m
     ports:
       - 27017
     volumes:
       - mongodb_data_container:/data/db
 
+  # A CAS server from Apereo with an did-auth overlay compiled into it.
   apereo-cas:
     image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/apereo-cas
     mem_limit: 1g
@@ -192,7 +195,6 @@ services:
       - 8090
       - 8443:8443
     volumes:
-      - "./config/cas/entrypoint.sh:/docker/entrypoint.sh"
       - "./config/cas/etc-config:/etc/cas"
     labels:
       - "traefik.enable=true"
@@ -203,6 +205,7 @@ services:
       - "traefik.http.middlewares.apereo-cas.redirectscheme.scheme=https"
       - "traefik.http.middlewares.apereo-cas.redirectscheme.permanent=true"
 
+  # A microservice that holds the DID account mappings. It uses MongoDB as database
   did-mapping-ms:
     image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/did-mapping-ms
     mem_limit: 512m
@@ -222,6 +225,7 @@ services:
       - "traefik.http.middlewares.did-mapping-ms.redirectscheme.scheme=https"
       - "traefik.http.middlewares.did-mapping-msz.redirectscheme.permanent=true"
 
+  # A microservice that handles uPort integration
   did-transports-ms:
     image: 718258401100.dkr.ecr.eu-west-1.amazonaws.com/sphereon-alfresco/did-transports-ms
     mem_limit: 512m
